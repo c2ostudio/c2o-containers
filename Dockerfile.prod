@@ -1,0 +1,48 @@
+# An example Dockerfile for installing nodejs on Ubuntu
+# docker build -t "ubuntu:nodejs" -f Dockerfile.prod .
+
+FROM ubuntu:latest
+MAINTAINER "c2o"
+
+ENV USER=root
+ENV HOME=/tmp
+ENV TERM=xterm
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get -qq install -y apt-utils python3.5 sudo build-essential curl libkrb5-dev python-software-properties software-properties-common libzmq3-dev python3-setuptools
+
+RUN easy_install3 pip
+RUN pip3 install --upgrade pip
+RUN pip3 install jupyter
+
+RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
+
+RUN apt-get install nodejs -y
+
+CMD ["npm install -g ijavascript"]
+#CMD ["/usr/local/bin/jupyter notebook --no-browser --port 8888 --ip=0.0.0.0"]
+
+RUN useradd --create-home --home-dir /home/c2o --shell /bin/bash c2o
+RUN chown -R c2o /home/c2o
+RUN adduser c2o sudo
+
+EXPOSE 8888
+RUN usermod -a -G sudo c2o
+RUN echo "c2o ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN mkdir -p /home/c2o/notebooks
+ENV HOME=/home/c2o
+ENV SHELL=/bin/bash
+ENV USER=c2o
+VOLUME /home/c2o/notebooks
+WORKDIR /home/c2o/notebooks
+
+RUN cd /home/c2o
+RUN chown -R c2o:c2o $HOME
+CMD ["chmod -R 777 /home/c2o"]
+
+# Install system libraries first as root
+USER root
